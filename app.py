@@ -9,6 +9,18 @@ load_dotenv()
 
 app = Flask(__name__)
 
+VALID_MONTHS = {
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+}
+
+VALID_INTERESTS = {
+    "Good Food", "Urban Vibes", "Nature", "Off the Beaten Path",
+    "Nightlife", "History & Culture", "Free Things to Do", "Shopping",
+}
+
+MAX_CITY_LENGTH = 100
+
 template = ChatPromptTemplate.from_messages(
     [
         (
@@ -53,25 +65,52 @@ def get_llm():
     )
 
 
+def sanitize_city(city):
+    """Strip control characters and collapse whitespace."""
+    cleaned = "".join(ch for ch in city if ch.isprintable())
+    return " ".join(cleaned.split()).strip()
+
+
 @app.route("/generate", methods=["POST"])
 def generate():
     data = request.get_json()
-    city = data.get("city", "")
-    days = data.get("days", "")
-    month = data.get("month", "")
-    interests = data.get("interests", [])
-    preference = ", ".join(interests)
+    if not data:
+        return jsonify({"error": "Invalid request."}), 400
 
-    if not city or not days or not month or not preference:
-        return jsonify(
-            {"error": "Please fill in all fields and select at least one interest."}
-        ), 400
+    city = sanitize_city(str(data.get("city", "")))
+    month = str(data.get("month", ""))
+    interests = data.get("interests", [])
+
+    # Validate days is a number in range
+    try:
+        days = int(data.get("days", 0))
+    except (ValueError, TypeError):
+        return jsonify({"error": "Days must be a number."}), 400
+    if days < 1 or days > 30:
+        return jsonify({"error": "Days must be between 1 and 30."}), 400
+
+    # Validate city
+    if not city or len(city) > MAX_CITY_LENGTH:
+        return jsonify({"error": "Please enter a valid destination (max 100 characters)."}), 400
+
+    # Validate month against whitelist
+    if month not in VALID_MONTHS:
+        return jsonify({"error": "Please select a valid month."}), 400
+
+    # Validate interests against whitelist
+    if not isinstance(interests, list) or not interests:
+        return jsonify({"error": "Please select at least one interest."}), 400
+    invalid = [i for i in interests if i not in VALID_INTERESTS]
+    if invalid:
+        return jsonify({"error": "Invalid interest selection."}), 400
+
+    preference = ", ".join(interests)
 
     llm_chain = template | get_llm() | StrOutputParser()
     ai_msg = llm_chain.invoke(
         {
             "city": city,
-            "days": days,
+            "days": str(days),
             "month": month,
             "preference": preference,
         }

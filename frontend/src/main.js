@@ -168,8 +168,15 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 function formatMarkdown(text) {
-  return text
+  const safe = escapeHtml(text);
+  return safe
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(
       /^### (.*$)/gm,
