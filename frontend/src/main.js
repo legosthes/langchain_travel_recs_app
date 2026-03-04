@@ -183,6 +183,18 @@ function formatMarkdown(text) {
       '<h3 class="text-lg font-semibold mt-4 mb-2">$1</h3>',
     )
     .replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold mt-6 mb-3">$1</h2>')
+    .replace(
+      /^(- <strong>Morning:?<\/strong>)/gm,
+      '<li class="ml-4"><span class="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-700 mr-1">Morning</span>',
+    )
+    .replace(
+      /^(- <strong>Afternoon:?<\/strong>)/gm,
+      '<li class="ml-4"><span class="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-sky-100 text-sky-700 mr-1">Afternoon</span>',
+    )
+    .replace(
+      /^(- <strong>Evening:?<\/strong>)/gm,
+      '<li class="ml-4"><span class="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-indigo-100 text-indigo-700 mr-1">Evening</span>',
+    )
     .replace(/^- (.*$)/gm, '<li class="ml-4">$1</li>')
     .replace(/(<li.*<\/li>)/s, '<ul class="list-disc space-y-1">$1</ul>')
     .replace(/\n{2,}/g, "<br/><br/>")
