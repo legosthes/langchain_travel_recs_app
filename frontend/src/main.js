@@ -8,11 +8,23 @@ const INTERESTS = [
   { id: "off-beaten-path", label: "Off the Beaten Path", icon: "🗺️" },
   { id: "nightlife", label: "Nightlife", icon: "🌙" },
   { id: "history-culture", label: "History & Culture", icon: "🏛️" },
+  { id: "freebies", label: "Free Things to Do", icon: "🆓" },
+  { id: "shopping", label: "Shopping", icon: "🛍️" },
 ];
 
 const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 function renderInterestChips() {
@@ -27,7 +39,7 @@ function renderInterestChips() {
         <span>${interest.icon}</span>
         ${interest.label}
       </span>
-    </label>`
+    </label>`,
   ).join("");
 }
 
@@ -58,7 +70,7 @@ document.querySelector("#app").innerHTML = `
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label for="days" class="block text-sm font-medium text-gray-700 mb-1.5">Days</label>
-            <input type="number" id="days" name="days" min="1" max="30" placeholder="e.g. 5" required
+            <input type="number" id="days" name="days" min="1" max="7" placeholder="e.g. 5" required
               class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-900
               placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" />
           </div>
@@ -116,7 +128,7 @@ form.addEventListener("submit", async (e) => {
   const days = document.getElementById("days").value;
   const month = document.getElementById("month").value;
   const interests = Array.from(
-    document.querySelectorAll('input[name="interests"]:checked')
+    document.querySelectorAll('input[name="interests"]:checked'),
   ).map((cb) => cb.value);
 
   if (interests.length === 0) {
@@ -159,10 +171,13 @@ form.addEventListener("submit", async (e) => {
 function formatMarkdown(text) {
   return text
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/^### (.*$)/gm, '<h3 class="text-lg font-semibold mt-4 mb-2">$1</h3>')
+    .replace(
+      /^### (.*$)/gm,
+      '<h3 class="text-lg font-semibold mt-4 mb-2">$1</h3>',
+    )
     .replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold mt-6 mb-3">$1</h2>')
     .replace(/^- (.*$)/gm, '<li class="ml-4">$1</li>')
     .replace(/(<li.*<\/li>)/s, '<ul class="list-disc space-y-1">$1</ul>')
-    .replace(/\n{2,}/g, '<br/><br/>')
+    .replace(/\n{2,}/g, "<br/><br/>")
     .replace(/\n/g, "<br/>");
 }
