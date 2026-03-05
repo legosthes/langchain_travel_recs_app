@@ -192,11 +192,11 @@ function formatContent(text) {
       /^-\s+(?:<strong>)?(Morning|Afternoon|Evening):?(?:<\/strong>)?:?\s*/gm,
       (_, period) => {
         const colors = BADGE[period];
-        return `<li class="ml-4"><span class="inline-block px-2 py-0.5 rounded text-xs font-semibold ${colors} mr-1">${period}</span> `;
+        return `<li class="ml-4"><span class="inline-block px-2 py-0.5 rounded text-xs font-semibold ${colors} mr-1">${period}</span></li>`;
       },
     )
     .replace(/^- (.*$)/gm, '<li class="ml-4">$1</li>')
-    .replace(/(<li[\s\S]*<\/li>)/g, '<ul class="list-disc space-y-1">$1</ul>')
+    .replace(/(<li[\s\S]*?<\/li>)/g, '<ul class="list-disc space-y-1">$1</ul>')
     .replace(/\n{2,}/g, "<br/><br/>")
     .replace(/\n/g, "<br/>");
 }
@@ -299,6 +299,7 @@ function initAccordions() {
     btn.addEventListener("click", () => {
       const targetId = btn.getAttribute("data-accordion");
       const body = document.getElementById(targetId);
+      if (!body) return;
       const arrow = btn.querySelector(".accordion-arrow");
       const isOpen = !body.classList.contains("hidden");
 
