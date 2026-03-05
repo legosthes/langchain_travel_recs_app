@@ -156,7 +156,8 @@ form.addEventListener("submit", async (e) => {
       throw new Error(data.error || "Something went wrong.");
     }
 
-    itineraryContent.innerHTML = formatMarkdown(data.itinerary);
+    itineraryContent.innerHTML = buildTimeline(data.itinerary);
+    initAccordions();
     resultDiv.classList.remove("hidden");
     resultDiv.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (err) {
@@ -174,29 +175,144 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-function formatMarkdown(text) {
-  const safe = escapeHtml(text);
-  return safe
+function formatContent(text) {
+  const BADGE = {
+    Morning: "bg-amber-100 text-amber-700",
+    Afternoon: "bg-sky-100 text-sky-700",
+    Evening: "bg-indigo-100 text-indigo-700",
+  };
+
+  return text
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(
       /^### (.*$)/gm,
-      '<h3 class="text-lg font-semibold mt-4 mb-2">$1</h3>',
-    )
-    .replace(/^## (.*$)/gm, '<h2 class="text-xl font-bold mt-6 mb-3">$1</h2>')
-    .replace(
-      /^(- <strong>Morning:?<\/strong>)/gm,
-      '<li class="ml-4"><span class="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-700 mr-1">Morning</span>',
+      '<h3 class="text-base font-semibold mt-3 mb-1">$1</h3>',
     )
     .replace(
-      /^(- <strong>Afternoon:?<\/strong>)/gm,
-      '<li class="ml-4"><span class="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-sky-100 text-sky-700 mr-1">Afternoon</span>',
-    )
-    .replace(
-      /^(- <strong>Evening:?<\/strong>)/gm,
-      '<li class="ml-4"><span class="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-indigo-100 text-indigo-700 mr-1">Evening</span>',
+      /^-\s+(?:<strong>)?(Morning|Afternoon|Evening):?(?:<\/strong>)?:?\s*/gm,
+      (_, period) => {
+        const colors = BADGE[period];
+        return `<li class="ml-4"><span class="inline-block px-2 py-0.5 rounded text-xs font-semibold ${colors} mr-1">${period}</span> `;
+      },
     )
     .replace(/^- (.*$)/gm, '<li class="ml-4">$1</li>')
-    .replace(/(<li.*<\/li>)/s, '<ul class="list-disc space-y-1">$1</ul>')
+    .replace(/(<li[\s\S]*<\/li>)/g, '<ul class="list-disc space-y-1">$1</ul>')
     .replace(/\n{2,}/g, "<br/><br/>")
     .replace(/\n/g, "<br/>");
+}
+
+function parseSections(text) {
+  const safe = escapeHtml(text);
+  const lines = safe.split("\n");
+  const sections = [];
+  let current = null;
+
+  for (const line of lines) {
+    const h2Match = line.match(/^\*\*(.*?)\*\*\s*$/);
+    if (h2Match) {
+      if (current) sections.push(current);
+      current = { title: h2Match[1].replace(/:$/, ""), body: "" };
+    } else if (current) {
+      current.body += line + "\n";
+    } else {
+      // Intro text before the first heading
+      if (!sections.length && line.trim()) {
+        sections.push({ title: null, body: line + "\n" });
+      } else if (
+        sections.length &&
+        sections[sections.length - 1].title === null
+      ) {
+        sections[sections.length - 1].body += line + "\n";
+      }
+    }
+  }
+  if (current) sections.push(current);
+  return sections;
+}
+
+const SECTION_ICONS = {
+  "Best Time to Visit": "☀️",
+  "Daily Itinerary": "📅",
+  "Local Tips": "💡",
+  "Recommended Restaurants": "🍽️",
+  "Estimated Budget": "💰",
+};
+
+function getSectionIcon(title) {
+  if (!title) return "📌";
+  for (const [key, icon] of Object.entries(SECTION_ICONS)) {
+    if (title.includes(key)) return icon;
+  }
+  if (/^Day\s+\d+/i.test(title)) return "📍";
+  return "📌";
+}
+
+function buildTimeline(text) {
+  const sections = parseSections(text);
+  if (!sections.length) return "<p>No itinerary generated.</p>";
+
+  return sections
+    .map((section, i) => {
+      if (section.title === null) {
+        return `<div class="mb-4 text-gray-600">${formatContent(section.body.trim())}</div>`;
+      }
+
+      // "Daily Itinerary" is the main title, not an accordion
+      if (/daily itinerary/i.test(section.title)) {
+        return `<h1 class="text-2xl font-bold text-gray-900 mt-6 mb-4">${section.title}</h1>`;
+      }
+
+      const icon = getSectionIcon(section.title);
+      const isLast = i === sections.length - 1;
+      const id = `section-${i}`;
+
+      return `
+      <div class="relative pl-10 ${isLast ? "" : "pb-6"}">
+        <!-- Timeline line -->
+        ${isLast ? "" : '<div class="absolute left-3.75 top-8 bottom-0 w-0.5 bg-gray-200"></div>'}
+        <!-- Timeline dot -->
+        <div class="absolute left-0 top-1 flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-sm ring-4 ring-white">
+          ${icon}
+        </div>
+        <!-- Accordion -->
+        <div class="border border-gray-200 rounded-xl overflow-hidden">
+          <button type="button" data-accordion="${id}"
+            class="accordion-toggle w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left">
+            <span class="font-semibold text-gray-900">${section.title}</span>
+            <svg class="accordion-arrow w-4 h-4 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <div id="${id}" class="accordion-body hidden">
+            <div class="px-4 py-3 text-sm text-gray-700 leading-relaxed">
+              ${formatContent(section.body.trim())}
+            </div>
+          </div>
+        </div>
+      </div>`;
+    })
+    .join("");
+}
+
+function initAccordions() {
+  document.querySelectorAll(".accordion-toggle").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const targetId = btn.getAttribute("data-accordion");
+      const body = document.getElementById(targetId);
+      const arrow = btn.querySelector(".accordion-arrow");
+      const isOpen = !body.classList.contains("hidden");
+
+      if (isOpen) {
+        body.classList.add("hidden");
+        arrow.classList.remove("rotate-180");
+      } else {
+        body.classList.remove("hidden");
+        arrow.classList.add("rotate-180");
+      }
+    });
+  });
+
+  // Open the first section by default
+  const first = document.querySelector(".accordion-toggle");
+  if (first) first.click();
 }
