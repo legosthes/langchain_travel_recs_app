@@ -1,0 +1,15 @@
+{
+  "hash": "ccc872d2",
+  "configHash": "227fef1b",
+  "lockfileHash": "045fba4e",
+  "browserHash": "77362736",
+  "optimized": {
+    "preline": {
+      "src": "../../node_modules/preline/dist/index.mjs",
+      "file": "preline.js",
+      "fileHash": "0145f4ec",
+      "needsInterop": false
+    }
+  },
+  "chunks": {}
+}
