@@ -10,13 +10,29 @@ load_dotenv()
 app = Flask(__name__)
 
 VALID_MONTHS = {
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
 }
 
 VALID_INTERESTS = {
-    "Good Food", "Urban Vibes", "Nature", "Off the Beaten Path",
-    "Nightlife", "History & Culture", "Free Things to Do", "Shopping",
+    "Good Food",
+    "Urban Vibes",
+    "Nature",
+    "Off the Beaten Path",
+    "Nightlife",
+    "History & Culture",
+    "Free Things to Do",
+    "Shopping",
 }
 
 MAX_CITY_LENGTH = 100
@@ -91,7 +107,9 @@ def generate():
 
     # Validate city
     if not city or len(city) > MAX_CITY_LENGTH:
-        return jsonify({"error": "Please enter a valid destination (max 100 characters)."}), 400
+        return jsonify(
+            {"error": "Please enter a valid destination (max 100 characters)."}
+        ), 400
 
     # Validate month against whitelist
     if month not in VALID_MONTHS:
